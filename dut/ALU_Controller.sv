@@ -6,158 +6,75 @@
 `include "modules/headers/rtype.vh"
 
 module ALU_Controller (
-  input logic [6:0] opcode ,
-  input logic [2:0] funct3,
-  input logic funct7_5,
-  input logic imm10
+	input logic [2:0] funct3 ,
+	input logic [6:0] opcode ,
+	input logic funct7_5 ,
+	input logic [31:0] raw_imm ,
+	output logic [3:0] alu_op
 ) ;
-  always_comb begin 
-    case (opcode) 
-      `OPCODE_AUIPC: begin 
-        alu_op = `ALU_OP_ADD ;
-      end
-      `OPCODE_JAL: begin
-				alu_op = `ALU_OP_ADD;
-			end
-			`OPCODE_JALR: begin
-				alu_op = `ALU_OP_ADD; // JALR instruction requires addition
-			end
-			`OPCODE_BRANCH: begin
-				case (funct3)
-					`BRANCH_BEQ: begin
-						alu_op = `ALU_OP_SUB; // If subtraction result is zero, equal
-					end
-					`BRANCH_BNE: begin
-						alu_op = `ALU_OP_SUB; // If subtraction result is not zero, not equal
-					end
-					`BRANCH_BLT: begin
-						alu_op = `ALU_OP_SLT; // If SLT result is not zero, less
-					end
-					`BRANCH_BGE: begin
-						alu_op = `ALU_OP_SLT; // If SLT result is zero, greater or equal
-					end
-					`BRANCH_BLTU: begin
-						alu_op = `ALU_OP_SLTU; // If SLTU result is not zero, less (unsigned)
-					end
-					`BRANCH_BGEU: begin
-						alu_op = `ALU_OP_SLTU; // If SLTU result is zero, greater or equal (unsigned)
-					end
-					default: begin
-					   alu_op = `ALU_OP_NOP;
-					end
-				endcase
-			end
-			`OPCODE_LOAD: begin
-				alu_op = `ALU_OP_ADD; // Every load instruction requires addition
-			end
-			`OPCODE_STORE: begin
-				alu_op = `ALU_OP_ADD; // Every store instruction requires addition
-			end
-			`OPCODE_ITYPE: begin
-				case (funct3)
-					`ITYPE_ADDI: begin
-						alu_op = `ALU_OP_ADD;
-					end
-					`ITYPE_SLLI: begin
-						alu_op = `ALU_OP_SLL;
-					end
-					`ITYPE_SLTI: begin
-						alu_op = `ALU_OP_SLT;
-					end
-					`ITYPE_SLTIU: begin
-						alu_op = `ALU_OP_SLTU;
-					end
-					`ITYPE_XORI: begin
-						alu_op = `ALU_OP_XOR;
-					end
-					`ITYPE_SRXI: begin // srli or srai
-						if (imm_10) begin
-							alu_op = `ALU_OP_SRA; // srai : imm[10] = 1
-						end
-						else begin
-							alu_op = `ALU_OP_SRL; // srli : imm[10] = 0
-						end
-					end
-					`ITYPE_ORI: begin
-						alu_op = `ALU_OP_OR; // ori : 110 ; - 
-					end
-					`ITYPE_ANDI: begin
-						alu_op = `ALU_OP_AND; // andi : 111 ; -
-					end
-					default: begin
-					   alu_op = `ALU_OP_NOP;
-					end
-				endcase
-			end
-			`OPCODE_RTYPE: begin
-         case (funct3)
-					`RTYPE_ADDSUB: begin // add or sub
-						if (funct7_5) begin
-							alu_op = `ALU_OP_SUB; // sub : funct7 = 0100000
-						end
-						else begin
-							alu_op = `ALU_OP_ADD; // add : funct7 = 0000000 
-						end
-					end
-					`RTYPE_SLL: begin 
-						alu_op = `ALU_OP_SLL;
-					end
-					`RTYPE_SLT: begin 
-						alu_op = `ALU_OP_SLT;
-					end
-					`RTYPE_SLTU: begin
-						alu_op = `ALU_OP_SLTU;
-					end
-					`RTYPE_XOR: begin
-						alu_op = `ALU_OP_XOR;
-					end
-					`RTYPE_SR: begin // srl or sra
-						if (funct7_5) begin
-							alu_op = `ALU_OP_SRA; // sra : funct7 = 0100000
-						end
-						else begin
-							alu_op = `ALU_OP_SRL; // srl : funct7 = 0000000
-						end
-					end
-					`RTYPE_OR: begin
-						alu_op = `ALU_OP_OR;
-					end
-					`RTYPE_AND: begin
-						alu_op = `ALU_OP_AND;
-					end
-					default: begin
-					   alu_op = `ALU_OP_NOP;
-                    end
-				endcase
+	always_comb begin 
+		alu_op = `ALU_OP_NOP ;
+
+		case (opcode) 
+			`OPCODE_AUIPC,
+			`OPCODE_JAL, 
+			`OPCODE_JALR,
+			`OPCODE_LOAD,
+			`OPCODE_STORE: begin 
+				alu_op = `ALU_OP_ADD ;
+			end 
+			
+			`OPCODE_BRANCH: begin 
+				case(funct3) 
+					`BRANCH_BEQ,
+					`BRANCH_BNE: alu_op = `ALU_OP_SUB ;
+					`BRANCH_BLT,
+					`BRANCH_BGE: alu_op = `ALU_OP_SLT ;
+					`BRANCH_BLTU, 
+                    `BRANCH_BGEU: alu_op = `ALU_OP_SLTU;
+                    default:      alu_op = `ALU_OP_NOP;
+                endcase
             end
-			`OPCODE_ENVIRONMENT: begin
-				case (funct3)
-					`CSR_CSRRW: begin
-						alu_op = `ALU_OP_BPA;
-					end
-					`CSR_CSRRS: begin
-						alu_op = `ALU_OP_OR;
-					end
-					`CSR_CSRRC: begin
-						alu_op = `ALU_OP_ABJ;
-					end
-					`CSR_CSRRWI: begin
-						alu_op = `ALU_OP_BPA;
-					end
-					`CSR_CSRRSI: begin
-						alu_op = `ALU_OP_OR;
-					end
-					`CSR_CSRRCI: begin
-						alu_op = `ALU_OP_ABJ;
-					end
-					default: begin
-						alu_op = `ALU_OP_NOP;
-					end
-				endcase
-			end
-			default: begin
-				alu_op = `ALU_OP_NOP;
-			end
+			`OPCODE_ITYPE: begin
+                case (funct3)
+                    `ITYPE_ADDI:  alu_op = `ALU_OP_ADD;
+                    `ITYPE_SLLI:  alu_op = `ALU_OP_SLL;
+                    `ITYPE_SLTI:  alu_op = `ALU_OP_SLT;
+                    `ITYPE_SLTIU: alu_op = `ALU_OP_SLTU;
+                    `ITYPE_XORI:  alu_op = `ALU_OP_XOR;
+                    `ITYPE_SRXI:  alu_op = raw_imm[10] ? `ALU_OP_SRA : `ALU_OP_SRL; // Phân biệt SRAI / SRLI dựa vào raw_imm[10]
+                    `ITYPE_ORI:   alu_op = `ALU_OP_OR;
+                    `ITYPE_ANDI:  alu_op = `ALU_OP_AND;
+                    default:      alu_op = `ALU_OP_NOP;
+                endcase
+            end
+
+            `OPCODE_RTYPE: begin
+                case (funct3)
+                    `RTYPE_ADDSUB: alu_op = funct7_5 ? `ALU_OP_SUB : `ALU_OP_ADD; // Phân biệt SUB / ADD
+                    `RTYPE_SLL:    alu_op = `ALU_OP_SLL;
+                    `RTYPE_SLT:    alu_op = `ALU_OP_SLT;
+                    `RTYPE_SLTU:   alu_op = `ALU_OP_SLTU;
+                    `RTYPE_XOR:    alu_op = `ALU_OP_XOR;
+                    `RTYPE_SR:     alu_op = funct7_5 ? `ALU_OP_SRA : `ALU_OP_SRL; // Phân biệt SRA / SRL
+                    `RTYPE_OR:     alu_op = `ALU_OP_OR;
+                    `RTYPE_AND:    alu_op = `ALU_OP_AND;
+                    default:       alu_op = `ALU_OP_NOP;
+                endcase
+            end
+
+            `OPCODE_ENVIRONMENT: begin
+                case (funct3)
+                    `CSR_CSRRW,  `CSR_CSRRWI: alu_op = `ALU_OP_BPA;
+                    `CSR_CSRRS,  `CSR_CSRRSI: alu_op = `ALU_OP_OR;
+                    `CSR_CSRRC,  `CSR_CSRRCI: alu_op = `ALU_OP_ABJ;
+                    default:                  alu_op = `ALU_OP_NOP;
+                endcase
+            end
+
+            default: begin
+                alu_op = `ALU_OP_NOP;
+            end
         endcase
     end
 
