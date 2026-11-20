@@ -1,31 +1,43 @@
 class alu_ctrl_env extends uvm_env;
-    `uvm_component_utils(alu_ctrl_env)
+  `uvm_component_utils(alu_ctrl_env)
+  alu_ctrl_agent      agent;
+  alu_ctrl_scoreboard scb;
 
-    // Khai báo các thành phần trong môi trường
-    alu_ctrl_driver     drv;
-    alu_ctrl_monitor    mon;
-    alu_ctrl_scoreboard scb;
-    uvm_sequencer#(alu_ctrl_seq_item) sqr;
+  function new(string name = "alu_ctrl_env", uvm_component parent = null);
+    super.new(name, parent);
+  endfunction
 
-    function new(string name = "alu_ctrl_env", uvm_component parent);
-        super.new(name, parent);
-    endfunction
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    agent = alu_ctrl_agent::type_id::create("agent", this);
+    scb   = alu_ctrl_scoreboard::type_id::create("scb", this);
+  endfunction
 
-    // Khởi tạo các component bằng factory create trong build_phase
-    virtual function void build_phase(uvm_phase phase);
-        super.build_phase(phase);
-        drv = alu_ctrl_driver::type_id::create("drv", this);
-        mon = alu_ctrl_monitor::type_id::create("mon", this);
-        scb = alu_ctrl_scoreboard::type_id::create("scb", this);
-        sqr = uvm_sequencer#(alu_ctrl_seq_item)::type_id::create("sqr", this);
-    endfunction
+  function void connect_phase(uvm_phase phase);
+    super.connect_phase(phase);
+    agent.mon.ap.connect(scb.item_export);
+  endfunction
+endclass
 
-    // Kết nối các cổng (Port - Export) trong connect_phase
-    virtual function void connect_phase(uvm_phase phase);
-        super.connect_phase(phase);
-        // Nối Driver với Sequencer để nhận transaction
-        drv.seq_item_port.connect(sqr.seq_item_export);
-        // Nối Monitor với Scoreboard để gửi dữ liệu đối chiếu
-        mon.mon_analysis_port.connect(scb.item_collected_export);
-    endfunction
+class alu_ctrl_test extends uvm_test;
+  `uvm_component_utils(alu_ctrl_test)
+  alu_ctrl_env env;
+
+  function new(string name = "alu_ctrl_test", uvm_component parent = null);
+    super.new(name, parent);
+  endfunction
+
+  function void build_phase(uvm_phase phase);
+    super.build_phase(phase);
+    uvm_config_db#(uvm_active_passive_enum)::set(this, "env.agent", "is_active", UVM_ACTIVE);
+    env = alu_ctrl_env::type_id::create("env", this);
+  endfunction
+
+  task run_phase(uvm_phase phase);
+    alu_ctrl_vplan_seq seq = alu_ctrl_vplan_seq::type_id::create("seq");
+    phase.raise_objection(this);
+    seq.start(env.agent.sqr);
+    #20;
+    phase.drop_objection(this);
+  endtask
 endclass
