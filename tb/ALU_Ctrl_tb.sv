@@ -1,19 +1,25 @@
-module ALU_Ctrl_tb;
+module ALU_Controller_tb;
   logic clk = 0;
   always #5 clk = ~clk;
 
-  logic [31:0] instr;
-  logic [3:0]  alu_op;
+  alu_ctrl_if vif(clk) ;
 
-  alu_ctrl dut (
-    .instr  (instr),
-    .alu_op (alu_op)
+  // Khá»i táº¡o DUT ALU_Controller nguyÃªn báº£n (khÃ´ng sá»­a RTL)
+  ALU_Controller alu_controller (
+    .opcode   (vif.opcode),
+    .funct3   (vif.funct3),
+    .funct7_5 (vif.funct7_5),
+    .imm_10   (vif.imm_10),
+    .alu_op   (vif.alu_op)
   );
 
-  bind alu_ctrl alu_ctrl_if vif_inst(.clk(ALU_Ctrl_tb.clk));
-
+  // Tá»± Äá»ng ná»i cÃ¡c biáº¿n trÃ¹ng tÃªn vÃ o interface báº±ng bind
+  
   initial begin
-    uvm_config_db#(virtual alu_ctrl_if)::set(null, "*", "vif", dut.vif_inst);
+    $dumpfile("testbenches/results/waveforms/ALU_Controller_tb_result.vcd");
+    $dumpvars(0, alu_controller);
+
+    uvm_config_db#(virtual alu_ctrl_if)::set(null, "*", "vif", vif) ;
     run_test("alu_ctrl_test");
   end
 endmodule
