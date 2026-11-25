@@ -13,13 +13,19 @@ class alu_ctrl_driver extends uvm_driver #(alu_ctrl_item);
   endfunction
 
   task run_phase(uvm_phase phase);
-    vif.drv_cb.instr <= 32'h0000_0013;
+    vif.drv_cb.opcode   <= 7'b0;
+    vif.drv_cb.funct3   <= 3'b0;
+    vif.drv_cb.funct7_5 <= 1'b0;
+    vif.drv_cb.imm_10   <= 1'b0;
+
     forever begin
       seq_item_port.get_next_item(req);
       @(vif.drv_cb);
-      vif.drv_cb.instr <= req.instr;
+      vif.drv_cb.opcode   <= req.opcode;
+      vif.drv_cb.funct3   <= req.funct3;
+      vif.drv_cb.funct7_5 <= req.funct7_5;
+      vif.drv_cb.imm_10   <= req.imm_10;
       seq_item_port.item_done();
     end
   endtask
 endclass
-
