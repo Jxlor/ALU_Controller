@@ -1,3 +1,14 @@
+`timescale 1ns/1ps
+`include "uvm_macros.svh"
+import uvm_pkg::*;
+`include "modules/headers/alu_op.vh"
+`include "modules/headers/branch.vh"
+`include "modules/headers/csr.vh"
+`include "modules/headers/itype.vh"
+`include "modules/headers/load.vh"
+`include "modules/headers/opcode.vh"
+`include "modules/headers/rtype.vh"
+`include "modules/headers/store.vh"
 module ALU_Controller_tb;
   logic clk = 0;
   always #5 clk = ~clk;
