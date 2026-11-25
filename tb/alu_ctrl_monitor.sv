@@ -16,11 +16,15 @@ class alu_ctrl_monitor extends uvm_monitor;
 
   task run_phase(uvm_phase phase);
     alu_ctrl_item item;
+    @(vif.drv_cb) ;
     forever begin
       @(vif.mon_cb);
       item = alu_ctrl_item::type_id::create("item");
-      item.instr  = vif.mon_cb.instr;
-      item.alu_op = alu_op_e'(vif.mon_cb.alu_op);
+      item.opcode   = vif.mon_cb.opcode;
+      item.funct3   = vif.mon_cb.funct3;
+      item.funct7_5 = vif.mon_cb.funct7_5;
+      item.imm_10   = vif.mon_cb.imm_10;
+      item.alu_op   = vif.mon_cb.alu_op;
       ap.write(item);
     end
   endtask
