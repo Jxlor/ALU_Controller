@@ -16,16 +16,16 @@ class alu_ctrl_scoreboard extends uvm_scoreboard;
   endfunction
 
   function void write(alu_ctrl_item item);
-    alu_op_e exp_op;
-    model.set_instr(item.instr);
+    logic [3:0] exp_op;
+    model.set_inputs(item.opcode, item.funct3, item.funct7_5, item.imm_10);
     exp_op = model.get_alu_op_expected();
 
     if (item.alu_op === exp_op) begin
       pass_cnt++;
     end else begin
       fail_cnt++;
-      `uvm_error("ALU_CTRL_ERR", $sformatf("Instr=%h | Expected=%s | Actual=%s",
-                 item.instr, exp_op.name(), item.alu_op.name()))
+      `uvm_error("ALU_CTRL_ERR", $sformatf("Opc=%b f3=%b f7_5=%b imm10=%b | Exp=%b | Act=%b",
+                 item.opcode, item.funct3, item.funct7_5, item.imm_10, exp_op, item.alu_op))
     end
   endfunction
 
