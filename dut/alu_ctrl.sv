@@ -5,7 +5,7 @@
 `include "modules/headers/opcode.vh"
 `include "modules/headers/rtype.vh"
 
-module ALUController (
+module ALU_Controller (
     input [6:0] opcode,        		// opcode
 	input [2:0] funct3,				// funct3
     input funct7_5,					// 5th index of funct7 (starting from 0th index)
